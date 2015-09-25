@@ -1,18 +1,34 @@
-package bitmap
+package bitmaptable
 
 import "testing"
 
-func TestNew(t *testing.T) {
-	b := New(1001, 4)
-	if bm, ok := b.(*bitmap); !ok {
-		t.Fatal("wrong bitmap type")
-	} else if len(bm.a) != 501 {
-		t.Fatal("wrong length")
+func TestTS(t *testing.T) {
+	bm := newTS(10, 5)
+	if bm.b.rows != 10 || bm.b.columns != 5 || len(bm.b.bitmap) != 7 {
+		t.Fatal("wrong configuration")
+	}
+	if bm.Rows() != 10 || bm.Columns() != 5 {
+		t.Fatal("wrong rows and/or columns")
+	}
+
+	data := bm.Data(false)
+	data[1] = 123
+	if bm.b.bitmap[1] != 123 {
+		t.Fatal("didn't return the same slice")
+	}
+
+	data2 := bm.Data(true)
+	if data2[1] != 123 {
+		t.Fatal("wrong copy?")
+	}
+	data2[1] = 111
+	if data[1] == 111 || bm.b.bitmap[1] == 111 {
+		t.Fatal("wrong copy")
 	}
 }
 
-func TestBitmapGetSet(t *testing.T) {
-	b := New(1000, 12)
+func TestTSGetSet(t *testing.T) {
+	b := newTS(1000, 12)
 	if err := b.Set(1001, 0, true); err != ErrIllegalIndex {
 		t.Fatal("illegal index must be returned")
 	}
@@ -36,16 +52,5 @@ func TestBitmapGetSet(t *testing.T) {
 
 	if _, err := b.Get(1001, 0); err != ErrIllegalIndex {
 		t.Fatal("illegal index")
-	}
-}
-
-func TestBitmapTS(t *testing.T) {
-	b := NewTS(1000, 4)
-	if err := b.Set(50, 1, true); err != nil {
-		t.Fatal(err)
-	}
-
-	if v, err := b.Get(50, 1); err != nil || !v {
-		t.Fatal("wrong value or unexpected error", v, err)
 	}
 }
