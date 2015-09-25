@@ -30,7 +30,7 @@ beings to have ever walked this earth, and needs give or take 26 GB of memory.
 
 ## Documentation
 
-See [godoc](https://godoc.org/github.com/boljen/go-bitmap) for more information.
+See [godoc](https://godoc.org/github.com/boljen/go-bitmaptable) for more information.
 
 ## License
 
