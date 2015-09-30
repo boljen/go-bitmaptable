@@ -27,39 +27,17 @@
 // beings to have ever walked this earth, and needs give or take 26 GB of memory.
 package bitmaptable
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/boljen/go-bitmap"
+)
 
 // These are errors that can be returned by the Bitmaptable.
 var (
 	ErrIllegalIndex = errors.New("Bitmaptable: Illegal identifier or position")
 	ErrIllegalWidth = errors.New("Bitmaptable: Illegal value width, must be between 1 and 64")
 )
-
-// Values for bitwise operations.
-var tA = [8]byte{1, 2, 4, 8, 16, 32, 64, 128}
-var tB = [8]byte{254, 253, 251, 247, 239, 223, 191, 127}
-
-// setBit sets bit "bit" of byte b to value v.
-// It doesn't throw an error if the position is invalid.
-func setBit(by byte, bit int, v bool) byte {
-	if v {
-		return by | tA[bit]
-	}
-	return by & tB[bit]
-}
-
-// getBit gets the value of bit p inside byte b.
-func getBit(by byte, bit int) bool {
-	return by&tA[bit] != 0
-}
-
-func calculateSize(rows, columns int) int {
-	size := (rows * columns) / 8
-	if (rows*columns)%8 != 0 {
-		size++
-	}
-	return size
-}
 
 // Bitmaptable is the basic bitmap table on which all other tables are built.
 // The bitmap table stores column-based bit information on a per-row basis.
@@ -95,53 +73,39 @@ func NewTS(rows, columns int) Bitmaptable {
 
 func newNTS(rows, columns int) *bitmaptable {
 	return &bitmaptable{
-		rows:    uint64(rows),
-		columns: uint16(columns),
-		bitmap:  make([]byte, calculateSize(rows, columns)),
+		rows:    rows,
+		columns: columns,
+		bitmap:  bitmap.New(columns * rows),
 	}
 }
 
 type bitmaptable struct {
-	rows    uint64 // Amount of rows.
-	columns uint16 // Amount of columns per row.
-	bitmap  []byte // The actual bitmap
-}
-
-// getPos returns the position of the bit.
-// The first integer is the actual byte index.
-// The second integer is the bit inside the byte.
-func (b *bitmaptable) getPos(row, column int) (int, int) {
-	pos := row*int(b.columns) + column
-	return pos / 8, pos % 8
+	rows    int           // Amount of rows.
+	columns int           // Amount of columns per row.
+	bitmap  bitmap.Bitmap // The actual bitmap
 }
 
 // Rows implements Bitmaptable.Rows
 func (b *bitmaptable) Rows() int {
-	return int(b.rows)
+	return b.rows
 }
 
 // Columns implements Bitmaptable.Columns
 func (b *bitmaptable) Columns() int {
-	return int(b.columns)
+	return b.columns
 }
 
 // Data implements Bitmaptable.Data
 func (b *bitmaptable) Data(c bool) []byte {
-	if !c {
-		return b.bitmap
-	}
-	data := make([]byte, len(b.bitmap))
-	copy(data, b.bitmap)
-	return data
+	return b.bitmap.Data(c)
 }
 
 // Get implements Bitmaptable.Get
 func (b *bitmaptable) Get(row int, column int) (bool, error) {
-	if column >= int(b.columns) || row >= int(b.rows) {
+	if column >= b.columns || row >= b.rows {
 		return false, ErrIllegalIndex
 	}
-	by, bit := b.getPos(row, column)
-	return getBit(b.bitmap[by], bit), nil
+	return b.bitmap.Get(row*b.columns + column), nil
 }
 
 // Set implements Bitmaptable.Set
@@ -149,44 +113,6 @@ func (b *bitmaptable) Set(row int, column int, value bool) error {
 	if column >= int(b.columns) || row >= int(b.rows) {
 		return ErrIllegalIndex
 	}
-	by, bit := b.getPos(row, column)
-	b.bitmap[by] = setBit(b.bitmap[by], bit, value)
+	b.bitmap.Set(row*b.columns+column, value)
 	return nil
 }
-
-/*
-
-TODO: Impelement these methods using efficient bitwise operations.
-
-// SetMulti sets a value accross multiple bit columns.
-// Values that cross up to 64 bits can be set.
-func (b *Bitmaptable) SetMulti(row int, column int, width int, value uint64) error {
-	if column+width >= int(b.columns) || row >= int(b.rows) {
-		return ErrIllegalIndex
-	} else if width > 64 || width <= 0 {
-		return ErrIllegalWidth
-	}
-
-	// First byte might not start at the first bit
-	// Other bytes will start after the first bit.
-
-	by, bit := b.getPos(row, column)
-	fmt.Println(by, bit)
-	return nil
-}
-
-// GetMulti gets a value accross multiple bit columns.
-// Values that cross up to 64 bits can be retrieved.
-func (b *Bitmaptable) GetMulti(row int, column int, width int) (uint64, error) {
-	if column+width >= int(b.columns) || row >= int(b.rows) {
-		return 0, ErrIllegalIndex
-	} else if width > 64 || width <= 0 {
-		return 0, ErrIllegalWidth
-	}
-
-	by, bit := b.getPos(row, column)
-	fmt.Println(by, bit)
-
-	return 0, nil
-}
-*/

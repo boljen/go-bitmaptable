@@ -2,30 +2,6 @@ package bitmaptable
 
 import "testing"
 
-func TestBitwiseOperations(t *testing.T) {
-	data := byte(0)
-	data = setBit(data, 0, true)
-	if data != 1 {
-		t.Fatal("wrong data")
-	}
-	if getBit(data, 0) != true {
-		t.Fatal("wrong getbit")
-	}
-	data = setBit(data, 0, false)
-	if data != 0 {
-		t.Fatal("wrong data")
-	}
-	if getBit(data, 0) != false {
-		t.Fatal("wrong getbit")
-	}
-}
-
-func TestCalculateSize(t *testing.T) {
-	if calculateSize(4, 4) != 2 {
-		t.Fatal("wrong calculated size")
-	}
-}
-
 func TestNew(t *testing.T) {
 	New(10, 5)
 	NewTS(10, 5)
@@ -53,14 +29,6 @@ func TestBitmaptable(t *testing.T) {
 	data2[1] = 111
 	if data[1] == 111 || bm.bitmap[1] == 111 {
 		t.Fatal("wrong copy")
-	}
-}
-
-func TestBitmaptableGetPos(t *testing.T) {
-	bm := newNTS(50, 1)
-	by, bi := bm.getPos(39, 0)
-	if by != 4 || bi != 7 {
-		t.Fatal("wrong position", by, bi)
 	}
 }
 

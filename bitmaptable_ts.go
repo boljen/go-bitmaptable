@@ -35,10 +35,7 @@ func (t *ts) Data(c bool) []byte {
 
 // Get implements Bitmaptable.Get
 func (t *ts) Get(row int, column int) (bool, error) {
-	t.mu.Lock()
-	v, err := t.b.Get(row, column)
-	t.mu.Unlock()
-	return v, err
+	return t.b.Get(row, column)
 }
 
 // Set implements Bitmaptable.Set
